@@ -1,9 +1,13 @@
-package banking;
+package pl.mjurek.banking;
 
 public class Account {
+    private long id;
     private String cardNumber;
     private String pin;
     private double balance;
+
+    public Account() {
+    }
 
     public Account(String cardNumber, String pin) {
         this.cardNumber = cardNumber;
@@ -13,15 +17,35 @@ public class Account {
         this.pin = pin;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     public String getCardNumber() {
         return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
     }
 
     public String getPin() {
         return pin;
     }
 
+    public void setPin(String pin) {
+        this.pin = pin;
+    }
+
     public double getBalance() {
         return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }

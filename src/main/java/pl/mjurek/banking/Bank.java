@@ -1,16 +1,17 @@
-package banking;
+package pl.mjurek.banking;
 
-import java.util.HashMap;
-import java.util.Map;
+import pl.mjurek.banking.db.CardDAO;
+import pl.mjurek.banking.db.CardDAOImpl;
+
 import java.util.Objects;
 import java.util.Random;
 
 
 public class Bank {
-    private Map<Long, Account> accounts;
+    private CardDAO accountDB;
 
-    public Bank() {
-        accounts = new HashMap<>();
+    public Bank(String dbName) {
+        accountDB = new CardDAOImpl(dbName);
     }
 
     public Account createAccount() {
@@ -25,27 +26,27 @@ public class Bank {
         long resultNumber = Long.parseLong(cardNumber);
         int pin = random.nextInt(10000);
 
-        String cardNumString =String.valueOf(resultNumber);
-        String cardPinString =String.valueOf(pin);
+        String cardNumString = String.valueOf(resultNumber);
+        String cardPinString = String.valueOf(pin);
 
         Account account = new Account(cardNumString, cardPinString);
-        return accounts.putIfAbsent(resultNumber, account) != null ? account : createAccount();
+        return putIfAbsent(account) ? account : createAccount();
     }
 
-    public Account getAccountIfCorrectCredential(long cardNumber, int pin) {
-        Account account = accounts.get(cardNumber);
-        if (account == null) {
-            return null;
+    private boolean putIfAbsent(Account account) {
+        Account acc = accountDB.read(account.getCardNumber());
+        if (acc != null) {
+            return false;
         }
-        return Objects.equals(account.getPin(),String.valueOf(pin)) ? account : null;
+        accountDB.create(account);
+        return true;
     }
 
     private String createCheckSum(String cardNumber) {
         int[] card = parseTableToInt(cardNumber);
-
         int sum = 0;
         for (int i = 0; i < card.length; i++) {
-            if (isOdd(i+1)) {
+            if (isOdd(i + 1)) {
                 card[i] *= 2;
             }
             if (card[i] > 9) {
@@ -54,10 +55,11 @@ public class Bank {
             sum += card[i];
         }
         int checkSum = 0;
-        while (((checkSum + sum )% 10) != 0) checkSum++;
+        while (((checkSum + sum) % 10) != 0) checkSum++;
 
         return String.valueOf(checkSum);
     }
+
 
     private int[] parseTableToInt(String text) {
         int[] result = new int[text.length()];
@@ -70,4 +72,21 @@ public class Bank {
     private boolean isOdd(int number) {
         return number % 2 == 1;
     }
+
+    public Account getAccountIfCorrectCredential(long cardNumber, int pin) {
+        if (!isCardNumberCorrect(cardNumber)) return null;
+        Account account = accountDB.read(String.valueOf(cardNumber));
+        return Objects.equals(account.getPin(), String.valueOf(pin)) ? account : null;
+    }
+
+    private boolean isCardNumberCorrect(long cardNumber) {
+        String card = String.valueOf(cardNumber);
+        if (card.length() != 16) return false;
+        char checkSum = card.charAt(card.length() - 1);
+        card = card.substring(0, card.length() - 1);
+        char countedCheckSum = createCheckSum(card).charAt(0);
+
+        return Objects.equals(checkSum, countedCheckSum);
+    }
+
 }

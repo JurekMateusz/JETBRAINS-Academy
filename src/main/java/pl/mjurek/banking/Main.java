@@ -1,5 +1,8 @@
-package banking;
+package pl.mjurek.banking;
 
+import pl.mjurek.banking.db.CreateDB;
+
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -50,9 +53,23 @@ public class Main {
         return false;
     }
 
+    public static String findDbName(String[] tab) {
+        int index = find(tab, "-fileName");
+        if (index == -1 && index + 1 >= tab.length) {
+            throw new IllegalArgumentException("Don't have -fileName param");
+        }
+        return tab[index + 1];
+    }
+
+    public static int find(String[] a, String target) {
+        return Arrays.asList(a).indexOf(target);
+    }
+
     public static void main(String[] args) {
-        bank = new Bank();
         lineSeparator = System.getProperty("line.separator");
+        String dbName = findDbName(args);
+        CreateDB.createNewDatabase(dbName);
+        bank = new Bank(dbName);
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
