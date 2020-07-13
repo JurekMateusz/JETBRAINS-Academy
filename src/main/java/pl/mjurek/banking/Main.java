@@ -1,6 +1,7 @@
 package pl.mjurek.banking;
 
 import pl.mjurek.banking.db.CreateDB;
+import pl.mjurek.banking.luhn.LuhnAlgorithm;
 
 import java.util.Arrays;
 import java.util.Objects;

@@ -2,6 +2,7 @@ package pl.mjurek.banking;
 
 import pl.mjurek.banking.db.CardDAO;
 import pl.mjurek.banking.db.CardDAOImpl;
+import pl.mjurek.banking.luhn.LuhnAlgorithm;
 
 import java.util.Objects;
 import java.util.Random;
