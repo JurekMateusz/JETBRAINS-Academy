@@ -4,7 +4,7 @@ public class Account {
     private long id;
     private String cardNumber;
     private String pin;
-    private double balance;
+    private int balance;
 
     public Account() {
     }
@@ -41,11 +41,12 @@ public class Account {
         this.pin = pin;
     }
 
-    public double getBalance() {
+    public int getBalance() {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    public void setBalance(int balance) {
         this.balance = balance;
     }
+
 }

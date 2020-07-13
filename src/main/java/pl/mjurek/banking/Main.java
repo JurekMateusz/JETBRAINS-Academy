@@ -3,57 +3,158 @@ package pl.mjurek.banking;
 import pl.mjurek.banking.db.CreateDB;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
     private static Bank bank;
     private static String lineSeparator;
+    private static Scanner scanner;
 
-    public static void printHelloScreen() {
+    public static void main(String[] args) {
+        lineSeparator = System.getProperty("line.separator");
+        scanner = new Scanner(System.in);
+        String dbName = findDbName(args);
+        CreateDB.createNewDatabase(dbName);
+        bank = new Bank(dbName);
+
+        boolean exit = false;
+        do {
+            printHelloScreen();
+            int choice = scanner.nextInt();
+
+            exit = consumeInputFirstStage(choice);
+        } while (!exit);
+
+        System.out.println("Bye!");
+    }
+
+    private static void printHelloScreen() {
         System.out.println("1. Create an account" + lineSeparator +
                 "2. Log into account" + lineSeparator +
                 "0. Exit");
     }
 
-    public static void printBankOptions() {
-        System.out.println("1. Balance" + lineSeparator +
-                "2. Log out" + lineSeparator +
-                "0. Exit");
+    private static boolean consumeInputFirstStage(int choose) {
+        boolean exit = switch (choose) {
+            case 1 -> {
+                createAccount();
+                yield false;
+            }
+            case 2 -> logIntoAccount();
+            default -> true;
+        };
+        return exit;
     }
 
-    public static void printCardCredential(String cardNumber, String cardPin) {
-        System.out.println("Your card number:" + lineSeparator + cardNumber + lineSeparator +
-                "Your card PIN:" + lineSeparator + cardPin);
-    }
-
-    public static void createAccount() {
+    private static void createAccount() {
         Account account = bank.createAccount();
         printCardCredential(account.getCardNumber(), account.getPin());
     }
 
-    public static boolean logIntoAccount() {
-        Scanner scanner = new Scanner(System.in);
+    private static boolean logIntoAccount() {
         System.out.println("Enter your card number:");
         long cardNumber = scanner.nextLong();
         System.out.println("Enter your PIN:");
         int pin = scanner.nextInt();
+
         Account account = bank.getAccountIfCorrectCredential(cardNumber, pin);
         if (account != null) {
             System.out.println("You have successfully logged in!");
-            while (true) {
+            boolean exit = false;
+            do {
                 printBankOptions();
-                int option = scanner.nextInt();
-                if (option == 0) return true;
-                if (option == 2) return false;
-                System.out.println("Balance: " + account.getBalance());
-            }
+                int choice = scanner.nextInt();
+
+                if (choice == 0) return true; //exit
+                exit = switch (choice) {
+                    case 1 -> {
+                        printAccountBalance(account);
+                        yield false;
+                    }
+                    case 2 -> {
+                        addIncome(account);
+                        yield false;
+                    }
+                    case 3 -> {
+                        doTransfer(account);
+                        yield false;
+                    }
+                    case 4 -> {
+                        bank.deleteAccount(account.getId());
+                        yield true;
+                    }
+                    case 5 -> true;
+                    default -> throw new IllegalStateException("Unexpected value: " + choice);
+                };
+            } while (!exit);
         } else {
             System.out.println("Wrong card number or PIN!");
         }
         return false;
     }
 
-    public static String findDbName(String[] tab) {
+    private static void printBankOptions() {
+        System.out.println(
+                "1. Balance" + lineSeparator +
+                        "2. Add income" + lineSeparator +
+                        "3. Do transfer" + lineSeparator +
+                        "4. Close account" + lineSeparator +
+                        "5. Log out" + lineSeparator +
+                        "0. Exit");
+    }
+
+    private static void printAccountBalance(Account account) {
+        int balance = bank.getBalance(account.getId());
+        System.out.println("Balance: " + balance);
+    }
+
+    private static void addIncome(Account account) {
+        System.out.println("Enter income:");
+        int income = scanner.nextInt();
+        account.setBalance(account.getBalance() + income);
+
+        bank.updateAccount(account);
+        System.out.println("Income was added!");
+    }
+
+    private static void doTransfer(Account account) {
+        System.out.println("Transfer" + lineSeparator +
+                "Enter card number:");
+        long cardNumberToTransfer = scanner.nextLong();
+
+        if (!LuhnAlgorithm.isCardNumberCorrect(cardNumberToTransfer)) {
+            System.out.println("Probably you made mistake in the card number. Please try again!");
+            return;
+        }
+        if (isUserTryToTransferToHisAccount(account, cardNumberToTransfer)) {
+            System.out.println("You can't transfer money to the same account!");
+            return;
+        }
+        if (!bank.isCardExist(cardNumberToTransfer)) {
+            System.out.println("Such a card does not exist.");
+            return;
+        }
+        System.out.println("Enter how much money you want to transfer:");
+        int moneyToTransfer = scanner.nextInt();
+
+        if (moneyToTransfer > account.getBalance()) {
+            System.out.println("Not enough money!");
+        } else {
+            account.setBalance(account.getBalance() - moneyToTransfer);
+            bank.updateAccount(account);
+            String toTransfer = String.valueOf(cardNumberToTransfer);
+            bank.transferMoneyToAccount(toTransfer, moneyToTransfer);
+            System.out.println("Success!");
+        }
+    }
+
+    private static void printCardCredential(String cardNumber, String cardPin) {
+        System.out.println("Your card number:" + lineSeparator + cardNumber + lineSeparator +
+                "Your card PIN:" + lineSeparator + cardPin);
+    }
+
+    private static String findDbName(String[] tab) {
         int index = find(tab, "-fileName");
         if (index == -1 && index + 1 >= tab.length) {
             throw new IllegalArgumentException("Don't have -fileName param");
@@ -61,31 +162,11 @@ public class Main {
         return tab[index + 1];
     }
 
-    public static int find(String[] a, String target) {
+    private static int find(String[] a, String target) {
         return Arrays.asList(a).indexOf(target);
     }
 
-    public static void main(String[] args) {
-        lineSeparator = System.getProperty("line.separator");
-        String dbName = findDbName(args);
-        CreateDB.createNewDatabase(dbName);
-        bank = new Bank(dbName);
-
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            printHelloScreen();
-            int choose = scanner.nextInt();
-            if (choose == 0) {
-                break;
-            }
-            if (choose == 1) {
-                createAccount();
-            } else {
-                boolean exit = logIntoAccount();
-
-                if (exit) break;
-            }
-        }
-        System.out.println("Bye!");
+    private static boolean isUserTryToTransferToHisAccount(Account account, long cardNumber) {
+        return Objects.equals(String.valueOf(cardNumber), account.getCardNumber());
     }
 }
