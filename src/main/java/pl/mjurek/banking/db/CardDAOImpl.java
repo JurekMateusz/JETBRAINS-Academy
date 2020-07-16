@@ -3,6 +3,7 @@ package pl.mjurek.banking.db;
 import pl.mjurek.banking.Account;
 
 import java.sql.*;
+import java.util.Optional;
 
 public class CardDAOImpl implements CardDAO {
     private String dbName;
@@ -38,8 +39,7 @@ public class CardDAOImpl implements CardDAO {
     }
 
     @Override
-    public Account read(String cardNumber) {
-        Account account = null;
+    public Optional<Account> read(String cardNumber) {
         Connection connection = ConnectionProvider.getConnection(dbName);
         try (PreparedStatement statement = connection.prepareStatement(read)) {
             statement.setString(1, cardNumber);
@@ -47,17 +47,18 @@ public class CardDAOImpl implements CardDAO {
             ResultSet rs = statement.executeQuery();
 
             if (rs.next()) {
-                account = new Account();
+                Account account = new Account();
                 account.setId(rs.getInt("id"));
                 account.setCardNumber(rs.getString("number"));
                 account.setPin(rs.getString("pin"));
                 account.setBalance(rs.getInt("balance"));
+                return Optional.of(account);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return account;
+        return Optional.empty();
     }
 
     @Override

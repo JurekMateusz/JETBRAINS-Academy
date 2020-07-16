@@ -5,8 +5,8 @@ import pl.mjurek.banking.db.CardDAOImpl;
 import pl.mjurek.banking.luhn.LuhnAlgorithm;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
-
 
 public class Bank {
     private CardDAO accountDB;
@@ -30,11 +30,11 @@ public class Bank {
 
         String cardNumString = String.valueOf(resultNumber);
         String cardPinString = convertToPin(pin);
-        
+
         Account account = new Account(cardNumString, cardPinString);
         return putIfAbsent(account) ? account : createAccount();
     }
-    
+
     private String convertToPin(long pin) {
         String result = String.valueOf(pin);
         if (result.length() < 4) {
@@ -56,18 +56,22 @@ public class Bank {
     }
 
     public boolean isCardExist(String cardNumber) {
-        return accountDB.read(cardNumber) == null ? false : true;
+        return accountDB.read(cardNumber).isPresent();
     }
 
+    public Optional<Account> getAccountIfCorrectCredential(long cardNumber, int pin) {
+        if (!LuhnAlgorithm.isCardNumberCorrect(cardNumber)) return Optional.empty();
+        Optional<Account> accountOpt = accountDB.read(String.valueOf(cardNumber));
 
-    public Account getAccountIfCorrectCredential(long cardNumber, int pin) {
-        if (!LuhnAlgorithm.isCardNumberCorrect(cardNumber)) return null;
-        Account account = accountDB.read(String.valueOf(cardNumber));
-        return Objects.equals(account.getPin(), String.valueOf(pin)) ? account : null;
+        return accountOpt.isPresent() && passwordEqual(accountOpt, pin) ? accountOpt : Optional.empty();
     }
 
     public int getBalance(long id) {
         return accountDB.readBalance(id);
+    }
+
+    private boolean passwordEqual(Optional<Account> accountOpt, int pin) {
+        return Objects.equals(accountOpt.get().getPin(), String.valueOf(pin));
     }
 
     public void updateAccount(Account account) {

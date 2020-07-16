@@ -5,6 +5,7 @@ import pl.mjurek.banking.luhn.LuhnAlgorithm;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
@@ -59,39 +60,25 @@ public class Main {
         System.out.println("Enter your PIN:");
         int pin = scanner.nextInt();
 
-        Account account = bank.getAccountIfCorrectCredential(cardNumber, pin);
-        if (account != null) {
-            System.out.println("You have successfully logged in!");
-            boolean exit = false;
-            do {
-                printBankOptions();
-                int choice = scanner.nextInt();
+        Optional<Account> accountOpt = bank.getAccountIfCorrectCredential(cardNumber, pin);
 
-                if (choice == 0) return true; //exit
-                exit = switch (choice) {
-                    case 1 -> {
-                        printAccountBalance(account);
-                        yield false;
-                    }
-                    case 2 -> {
-                        addIncome(account);
-                        yield false;
-                    }
-                    case 3 -> {
-                        doTransfer(account);
-                        yield false;
-                    }
-                    case 4 -> {
-                        bank.deleteAccount(account.getId());
-                        yield true;
-                    }
-                    case 5 -> true;
-                    default -> throw new IllegalStateException("Unexpected value: " + choice);
-                };
-            } while (!exit);
-        } else {
+        if (accountOpt.isEmpty()) {
             System.out.println("Wrong card number or PIN!");
+            return false;
         }
+
+        Account account = accountOpt.get();
+        System.out.println("You have successfully logged in!");
+        boolean exit = false;
+
+        while (!exit) {
+            printBankOptions();
+            int choice = scanner.nextInt();
+            if (choice == 0) return true; //exit form bank
+
+            exit = consumeInputSecondStage(account, choice);
+        }
+
         return false;
     }
 
@@ -103,6 +90,29 @@ public class Main {
                         "4. Close account" + lineSeparator +
                         "5. Log out" + lineSeparator +
                         "0. Exit");
+    }
+
+    private static boolean consumeInputSecondStage(Account account, int choice) {
+        return switch (choice) {
+            case 1 -> {
+                printAccountBalance(account);
+                yield false;
+            }
+            case 2 -> {
+                addIncome(account);
+                yield false;
+            }
+            case 3 -> {
+                doTransfer(account);
+                yield false;
+            }
+            case 4 -> {
+                bank.deleteAccount(account.getId());
+                yield true;
+            }
+            case 5 -> true; //Logout
+            default -> throw new IllegalStateException("Unexpected value: " + choice);
+        };
     }
 
     private static void printAccountBalance(Account account) {
