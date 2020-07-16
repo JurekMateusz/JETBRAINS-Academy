@@ -11,12 +11,8 @@ public class Account {
 
     public Account(String cardNumber, String pin) {
         this.cardNumber = cardNumber;
-        if (pin.length() < 4) {
-            while (pin.length() < 4) pin += "0";
-        }
         this.pin = pin;
     }
-
     public long getId() {
         return id;
     }

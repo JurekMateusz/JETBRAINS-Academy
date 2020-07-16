@@ -29,10 +29,18 @@ public class Bank {
         int pin = random.nextInt(10000);
 
         String cardNumString = String.valueOf(resultNumber);
-        String cardPinString = String.valueOf(pin);
+        String cardPinString = convertToPin(pin);
 
         Account account = new Account(cardNumString, cardPinString);
         return putIfAbsent(account) ? account : createAccount();
+    }
+    
+    private String convertToPin(long pin) {
+        String result = String.valueOf(pin);
+        if (result.length() < 4) {
+            while (result.length() < 4) result += "0";
+        }
+        return result;
     }
 
     private boolean putIfAbsent(Account account) {
