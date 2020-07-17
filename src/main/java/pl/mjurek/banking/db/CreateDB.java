@@ -9,7 +9,7 @@ public class CreateDB {
     public static void createNewDatabase(String fileName) {
         Connection conn = ConnectionProvider.getConnection(fileName);
         if (conn == null) return;
-        
+
         try (Statement statement = conn.createStatement()) {
             DatabaseMetaData meta = conn.getMetaData();
 

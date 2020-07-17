@@ -23,18 +23,17 @@ public class LifePanel extends JPanel {
         }
     }
 
-    public void updateCellArray(boolean[][] board) {
-
-        if (cellArray != null) {
+    public void updateCellArray(CellStatus[][] board) {
+        if (cellArray == null) {
+            initialize(board.length);
+            updateCellArray(board);
+        } else {
             for (int i = 0; i < board.length; i++) {
                 for (int j = 0; j < board[0].length; j++) {
-                    cellArray[i][j].setAlive(board[i][j]);
+                    cellArray[i][j].setAlive(board[i][j] == CellStatus.ALIVE);
                 }
             }
             repaint();
-        } else {
-            initialize(board.length);
-            updateCellArray(board);
         }
     }
 

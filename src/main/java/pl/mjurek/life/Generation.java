@@ -4,44 +4,37 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class Generation {
-    private boolean[][] generation;
+    private final CellStatus[][] generation;
 
     public Generation(int size) {
-        generation = new boolean[size][size];
+        generation = new CellStatus[size][size];
         createFirstGeneration();
     }
 
-    public void setCellGeneration(int i, int j, boolean val) {
+    public void setCellGeneration(int i, int j, CellStatus val) {
         generation[i][j] = val;
     }
 
-
-    public boolean[][] getCopyOfGeneration() {
+    public CellStatus[][] getCopyOfGeneration() {
         return Arrays.stream(generation)
-                .map(boolean[]::clone)
-                .toArray(boolean[][]::new);
+                .map(CellStatus[]::clone)
+                .toArray(CellStatus[][]::new);
     }
 
     private void createFirstGeneration() {
         Random random = new Random();
-
         for (int i = 0; i < generation.length; i++) {
             for (int j = 0; j < generation.length; j++) {
-                generation[i][j] = random.nextBoolean();
+                boolean res = random.nextBoolean();
+                generation[i][j] = res ? CellStatus.ALIVE : CellStatus.DEAD;
             }
         }
     }
 
-
     public int getNumberOfAlives() {
-        int result = 0;
-        for (int i = 0; i < generation.length; i++) {
-            for (int j = 0; j < generation.length; j++) {
-                if (generation[i][j]) {
-                    result++;
-                }
-            }
-        }
-        return result;
+        return (int) Arrays.stream(generation)
+                .flatMap(Arrays::stream)
+                .filter(i -> i == CellStatus.ALIVE)
+                .count();
     }
 }

@@ -52,12 +52,11 @@ public class GameOfLife extends JFrame {
         int currentGen = 1;
         while (true) {
             sleep();
-            boolean[][] nextGen = universe.nextGeneration();
+            CellStatus[][] nextGen = universe.nextGeneration();
             int alive = universe.getGeneration().getNumberOfAlives();
 
             updateVisuals(currentGen, alive, nextGen);
 
-            if (universe.isLifeFinalForm(nextGen)) break;
             currentGen++;
         }
     }
@@ -70,7 +69,7 @@ public class GameOfLife extends JFrame {
         }
     }
 
-    private void updateVisuals(int currentGen, int alive, boolean[][] nextGen) {
+    private void updateVisuals(int currentGen, int alive, CellStatus[][] nextGen) {
         generationLabel.setText("Generation #" + currentGen);
         generationLabel.repaint();
 

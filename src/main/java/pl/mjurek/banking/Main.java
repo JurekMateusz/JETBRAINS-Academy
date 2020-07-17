@@ -69,8 +69,8 @@ public class Main {
 
         Account account = accountOpt.get();
         System.out.println("You have successfully logged in!");
-        boolean exit = false;
 
+       boolean exit = false;
         while (!exit) {
             printBankOptions();
             int choice = scanner.nextInt();
