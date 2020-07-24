@@ -33,12 +33,11 @@ public class LuhnAlgorithm {
         return number % 2 == 1;
     }
 
-    public static boolean isCardNumberCorrect(long cardNumber) {
-        String card = String.valueOf(cardNumber);
-        if (card.length() != 16) return false;
-        char checkSum = card.charAt(card.length() - 1);
-        card = card.substring(0, card.length() - 1);
-        int countedCheckSum = createCheckSum(card);
+    public static boolean isCardNumberCorrect(String cardNumber) {
+        if (cardNumber.length() != 16) return false;
+        char checkSum = cardNumber.charAt(cardNumber.length() - 1);
+        cardNumber = cardNumber.substring(0, cardNumber.length() - 1);
+        int countedCheckSum = createCheckSum(cardNumber);
 
         return countedCheckSum == Integer.parseInt(String.valueOf(checkSum));
     }

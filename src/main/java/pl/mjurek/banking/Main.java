@@ -2,6 +2,7 @@ package pl.mjurek.banking;
 
 import pl.mjurek.banking.db.CreateDB;
 import pl.mjurek.banking.luhn.LuhnAlgorithm;
+import pl.mjurek.banking.model.Account;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -56,9 +57,9 @@ public class Main {
 
     private static boolean logIntoAccount() {
         System.out.println("Enter your card number:");
-        long cardNumber = scanner.nextLong();
+        String cardNumber = scanner.next();
         System.out.println("Enter your PIN:");
-        int pin = scanner.nextInt();
+        String pin = scanner.next();
 
         Optional<Account> accountOpt = bank.getAccountIfCorrectCredential(cardNumber, pin);
 
@@ -70,7 +71,7 @@ public class Main {
         Account account = accountOpt.get();
         System.out.println("You have successfully logged in!");
 
-       boolean exit = false;
+        boolean exit = false;
         while (!exit) {
             printBankOptions();
             int choice = scanner.nextInt();
@@ -122,7 +123,7 @@ public class Main {
 
     private static void addIncome(Account account) {
         System.out.println("Enter income:");
-        int income = scanner.nextInt();
+        int income = Integer.parseInt(scanner.next());
         account.setBalance(account.getBalance() + income);
 
         bank.updateAccount(account);
@@ -132,7 +133,7 @@ public class Main {
     private static void doTransfer(Account account) {
         System.out.println("Transfer" + lineSeparator +
                 "Enter card number:");
-        long cardNumberToTransfer = scanner.nextLong();
+        String cardNumberToTransfer = scanner.next();
 
         if (!LuhnAlgorithm.isCardNumberCorrect(cardNumberToTransfer)) {
             System.out.println("Probably you made mistake in the card number. Please try again!");
@@ -177,7 +178,7 @@ public class Main {
         return Arrays.asList(a).indexOf(target);
     }
 
-    private static boolean isUserTryToTransferToHisAccount(Account account, long cardNumber) {
+    private static boolean isUserTryToTransferToHisAccount(Account account, String cardNumber) {
         return Objects.equals(String.valueOf(cardNumber), account.getCardNumber());
     }
 }

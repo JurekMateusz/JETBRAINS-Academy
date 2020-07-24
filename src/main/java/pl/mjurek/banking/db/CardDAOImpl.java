@@ -1,18 +1,19 @@
 package pl.mjurek.banking.db;
 
-import pl.mjurek.banking.Account;
+import pl.mjurek.banking.model.Account;
 
 import java.sql.*;
 import java.util.Optional;
 
 public class CardDAOImpl implements CardDAO {
     private String dbName;
-    final String create = "INSERT INTO card(number,pin) VALUES(?,?)";
-    final String read = "SELECT id,number,pin,balance FROM card WHERE number=?";
-    final String update = "UPDATE card SET number = ? ,pin = ? , balance = ? WHERE id = ?";
-    final String delete = "DELETE FROM card WHERE id = ?";
-    final String readBalance = "SELECT balance FROM card WHERE id=?";
-    final String transferMoney = "UPDATE card SET balance = balance + ?  WHERE number = ?";
+    private final String create = "INSERT INTO card(number,pin) VALUES(?,?)";
+    private final String read = "SELECT id,number,pin,balance FROM card WHERE number = ? AND pin = ?";
+    private final String update = "UPDATE card SET number = ? ,pin = ? , balance = ? WHERE id = ?";
+    private final String delete = "DELETE FROM card WHERE id = ?";
+    private final String isExist = "SELECT COUNT() FROM card WHERE NUMBER = ? LIMIT 1";
+    private final String readBalance = "SELECT balance FROM card WHERE id=?";
+    private final String transferMoney = "UPDATE card SET balance = balance + ?  WHERE number = ?";
 
     public CardDAOImpl(String dbName) {
         this.dbName = dbName;
@@ -39,10 +40,11 @@ public class CardDAOImpl implements CardDAO {
     }
 
     @Override
-    public Optional<Account> read(String cardNumber) {
+    public Optional<Account> read(String cardNumber, String pin) {
         Connection connection = ConnectionProvider.getConnection(dbName);
         try (PreparedStatement statement = connection.prepareStatement(read)) {
             statement.setString(1, cardNumber);
+            statement.setString(2, pin);
 
             ResultSet rs = statement.executeQuery();
 
@@ -86,6 +88,20 @@ public class CardDAOImpl implements CardDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean isCardExist(String cardNumber) {
+        Connection connection = ConnectionProvider.getConnection(dbName);
+        try (PreparedStatement statement = connection.prepareStatement(isExist)) {
+            statement.setString(1, cardNumber);
+
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) return rs.getInt(1) == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     @Override

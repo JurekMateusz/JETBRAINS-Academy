@@ -1,20 +1,19 @@
 package pl.mjurek.banking;
 
-import pl.mjurek.banking.db.CardDAO;
-import pl.mjurek.banking.db.CardDAOImpl;
 import pl.mjurek.banking.luhn.LuhnAlgorithm;
+import pl.mjurek.banking.model.Account;
+import pl.mjurek.banking.service.AccountService;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.IntStream;
 
 public class Bank {
-    private CardDAO accountDB;
+    private AccountService accountService;
 
     public Bank(String dbName) {
-        accountDB = new CardDAOImpl(dbName);
+        accountService = new AccountService(dbName);
     }
 
     public Account createAccount() {
@@ -43,44 +42,35 @@ public class Bank {
 
     private boolean putIfAbsent(Account account) {
         if (!isCardExist(account.getCardNumber())) {
-            accountDB.create(account);
+            accountService.put(account);
             return true;
         }
         return false;
     }
 
-    public boolean isCardExist(Long cardNumber) {
-        return isCardExist(String.valueOf(cardNumber));
-    }
-
     public boolean isCardExist(String cardNumber) {
-        return accountDB.read(cardNumber).isPresent();
+        return accountService.isCardExits(cardNumber);
     }
 
-    public Optional<Account> getAccountIfCorrectCredential(long cardNumber, int pin) {
+    public Optional<Account> getAccountIfCorrectCredential(String cardNumber, String pin) {
         if (!LuhnAlgorithm.isCardNumberCorrect(cardNumber)) return Optional.empty();
-        Optional<Account> accountOpt = accountDB.read(String.valueOf(cardNumber));
 
-        return accountOpt.isPresent() && passwordEqual(accountOpt, pin) ? accountOpt : Optional.empty();
+        return accountService.getIfCorrectCredential(cardNumber,pin);
     }
 
     public int getBalance(long id) {
-        return accountDB.readBalance(id);
-    }
-
-    private boolean passwordEqual(Optional<Account> accountOpt, int pin) {
-        return Objects.equals(accountOpt.get().getPin(), String.valueOf(pin));
+        return accountService.getAccountBalance(id);
     }
 
     public void updateAccount(Account account) {
-        accountDB.update(account);
+        accountService.update(account);
     }
 
     public void transferMoneyToAccount(String cardNumber, int money) {
-        accountDB.increaseMoneyInCardAccount(cardNumber, money);
+        accountService.transferMoneyToAccount(cardNumber, money);
     }
 
     public void deleteAccount(long id) {
-        accountDB.delete(id);
+        accountService.delete(id);
     }
 }

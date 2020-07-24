@@ -49,7 +49,7 @@ public class UniverseLogic {
 
         return current[ii][jj] == CellStatus.ALIVE ? 1 : 0;
     }
-    
+
     private CellStatus getCellValue(int i, int j) {
         return current[i][j];
     }
