@@ -1,9 +1,12 @@
 package pl.mjurek.banking;
 
 import pl.mjurek.banking.db.CreateDB;
+import pl.mjurek.banking.luhn.LuhnAlgorithm;
+import pl.mjurek.banking.model.Account;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
@@ -54,43 +57,29 @@ public class Main {
 
     private static boolean logIntoAccount() {
         System.out.println("Enter your card number:");
-        long cardNumber = scanner.nextLong();
+        String cardNumber = scanner.next();
         System.out.println("Enter your PIN:");
-        int pin = scanner.nextInt();
+        String pin = scanner.next();
 
-        Account account = bank.getAccountIfCorrectCredential(cardNumber, pin);
-        if (account != null) {
-            System.out.println("You have successfully logged in!");
-            boolean exit = false;
-            do {
-                printBankOptions();
-                int choice = scanner.nextInt();
+        Optional<Account> accountOpt = bank.getAccountIfCorrectCredential(cardNumber, pin);
 
-                if (choice == 0) return true; //exit
-                exit = switch (choice) {
-                    case 1 -> {
-                        printAccountBalance(account);
-                        yield false;
-                    }
-                    case 2 -> {
-                        addIncome(account);
-                        yield false;
-                    }
-                    case 3 -> {
-                        doTransfer(account);
-                        yield false;
-                    }
-                    case 4 -> {
-                        bank.deleteAccount(account.getId());
-                        yield true;
-                    }
-                    case 5 -> true;
-                    default -> throw new IllegalStateException("Unexpected value: " + choice);
-                };
-            } while (!exit);
-        } else {
+        if (accountOpt.isEmpty()) {
             System.out.println("Wrong card number or PIN!");
+            return false;
         }
+
+        Account account = accountOpt.get();
+        System.out.println("You have successfully logged in!");
+
+        boolean exit = false;
+        while (!exit) {
+            printBankOptions();
+            int choice = scanner.nextInt();
+            if (choice == 0) return true; //exit form bank
+
+            exit = consumeInputSecondStage(account, choice);
+        }
+
         return false;
     }
 
@@ -104,6 +93,29 @@ public class Main {
                         "0. Exit");
     }
 
+    private static boolean consumeInputSecondStage(Account account, int choice) {
+        return switch (choice) {
+            case 1 -> {
+                printAccountBalance(account);
+                yield false;
+            }
+            case 2 -> {
+                addIncome(account);
+                yield false;
+            }
+            case 3 -> {
+                doTransfer(account);
+                yield false;
+            }
+            case 4 -> {
+                bank.deleteAccount(account.getId());
+                yield true;
+            }
+            case 5 -> true; //Logout
+            default -> throw new IllegalStateException("Unexpected value: " + choice);
+        };
+    }
+
     private static void printAccountBalance(Account account) {
         int balance = bank.getBalance(account.getId());
         System.out.println("Balance: " + balance);
@@ -111,7 +123,7 @@ public class Main {
 
     private static void addIncome(Account account) {
         System.out.println("Enter income:");
-        int income = scanner.nextInt();
+        int income = Integer.parseInt(scanner.next());
         account.setBalance(account.getBalance() + income);
 
         bank.updateAccount(account);
@@ -121,7 +133,7 @@ public class Main {
     private static void doTransfer(Account account) {
         System.out.println("Transfer" + lineSeparator +
                 "Enter card number:");
-        long cardNumberToTransfer = scanner.nextLong();
+        String cardNumberToTransfer = scanner.next();
 
         if (!LuhnAlgorithm.isCardNumberCorrect(cardNumberToTransfer)) {
             System.out.println("Probably you made mistake in the card number. Please try again!");
@@ -166,7 +178,7 @@ public class Main {
         return Arrays.asList(a).indexOf(target);
     }
 
-    private static boolean isUserTryToTransferToHisAccount(Account account, long cardNumber) {
+    private static boolean isUserTryToTransferToHisAccount(Account account, String cardNumber) {
         return Objects.equals(String.valueOf(cardNumber), account.getCardNumber());
     }
 }

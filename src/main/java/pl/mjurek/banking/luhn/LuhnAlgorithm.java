@@ -1,8 +1,11 @@
 package pl.mjurek.banking.luhn;
 
+import java.util.stream.Stream;
+
 public class LuhnAlgorithm {
     public static int createCheckSum(String cardNumber) {
         int[] card = parseTableToInt(cardNumber);
+        
         int sum = 0;
         for (int i = 0; i < card.length; i++) {
             if (isOdd(i + 1)) {
@@ -21,23 +24,20 @@ public class LuhnAlgorithm {
 
 
     private static int[] parseTableToInt(String text) {
-        int[] result = new int[text.length()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = Integer.parseInt(String.valueOf(text.charAt(i)));
-        }
-        return result;
+        return Stream.of(text.split(""))
+                .mapToInt(Integer::parseInt)
+                .toArray();
     }
 
     private static boolean isOdd(int number) {
         return number % 2 == 1;
     }
 
-    public static boolean isCardNumberCorrect(long cardNumber) {
-        String card = String.valueOf(cardNumber);
-        if (card.length() != 16) return false;
-        char checkSum = card.charAt(card.length() - 1);
-        card = card.substring(0, card.length() - 1);
-        int countedCheckSum = createCheckSum(card);
+    public static boolean isCardNumberCorrect(String cardNumber) {
+        if (cardNumber.length() != 16) return false;
+        char checkSum = cardNumber.charAt(cardNumber.length() - 1);
+        cardNumber = cardNumber.substring(0, cardNumber.length() - 1);
+        int countedCheckSum = createCheckSum(cardNumber);
 
         return countedCheckSum == Integer.parseInt(String.valueOf(checkSum));
     }
